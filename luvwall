@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 link="https://source.unsplash.com/random/"
 
-[ -z "${XDG_CONFIG_HOME}" ] && XDG_CONFIG_HOME="${HOME}/.config"
+#[ -z "${XDG_CONFIG_HOME}" ] && XDG_CONFIG_HOME="${HOME}/.config"
 
-[ -z "${XDG_CACHE_HOME}" ] && XDG_CACHE_HOME="${HOME}/.cache"
+#[ -z "${XDG_CACHE_HOME}" ] && XDG_CACHE_HOME="${HOME}/.cache"
 
-confdir="${XDG_CONFIG_HOME}/luvwall"
+#confdir="${XDG_CONFIG_HOME}/luvwall"
 
-[ -d "${confdir}" ] || mkdir -p "${confdir}"
+#[ -d "${confdir}" ] || mkdir -p "${confdir}"
+
+#environment variables
+: "${LUVWALL_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/luvwall.conf}"
+
+# allow custom variables in configuration file
+[ -f "$LUVWALL_CONFIG" ] && . "$LUVWALL_CONFIG"
+
+: "${wallpaper_setter:=xwallpaper --zoom}"
 
 #this location is usually mounted on ram so many operations of writing doesn't affect your drives
 cachedir="/tmp/livewall"
@@ -222,7 +230,7 @@ nasa_image() {
     token_file="$HOME"/.local/share/tokens/nasa
     [ -f "token_file" ] && read -r token < "$token_file" || token=DEMO_KEY    
     wget $(curl -sf "https://api.nasa.gov/planetary/apod?api_key=$token" \
-      |jq ".url"| tr -d '"') -O $wallpaper && xwallpaper --zoom $wallpaper
+      |jq ".url"| tr -d '"') -O $wallpaper && $wallpaper_setter $wallpaper
 
 }
 
@@ -316,13 +324,13 @@ sway_cmd() {
 }
 
 wallpaper_prog_cmd() {
-    local feh=(xwallpaper)
+    local feh=($wallpaper_setter)
     if [ -n "$bgtype" ]; then
         if [ $bgtype == 'bg-center' ]; then
             feh+=(--zoom)
         fi
     else
-        feh+=(--zoom)
+        feh+=($wallpaper_setter)
     fi
     
     if [ -n "$custom" ]; then
