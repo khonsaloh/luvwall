@@ -16,6 +16,7 @@ link="https://source.unsplash.com/random/"
 [ -f "$LUVWALL_CONFIG" ] && . "$LUVWALL_CONFIG"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
+: "${wall_save_path:=${HOME}/Pictures/wallpaper${RANDOM}.jpg}"
 
 #this location is usually mounted on ram so many operations of writing doesn't affect your drives
 cachedir="/tmp/livewall"
@@ -25,7 +26,7 @@ cachedir="/tmp/livewall"
 wallpaper="${cachedir}/wallpaper.jpg"
 
 save_cmd(){
-    cp "${wallpaper}" "${HOME}/Pictures/wallpaper${RANDOM}.jpg"
+    cp "${wallpaper}" "${wall_save_path}"
 }
 
 die() {
@@ -347,7 +348,7 @@ light=0
 sway=false
 monitors=1
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:sa --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,monitors:,termcolor:,nasa:,lighwal:,sway,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,monitors:,termcolor:,nasa:,lighwal:,sway,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
