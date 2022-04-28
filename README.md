@@ -20,7 +20,12 @@ This script is made to work with ```feh```,  or  ```Sway```, having one of those
 ## Install
 ```
 git clone https://github.com/khonsaloh/luvwall
-sudo make install luvwall
+sudo make install
+```
+## Uninstall
+
+```
+sudo make uninstall
 ```
 
 ## Usage
