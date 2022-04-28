@@ -1,14 +1,16 @@
-# Styli.sh - Wallpaper switching made easy
+# Luvwall - Wallpaper switching made easy
 
-Styli.sh is a Bash script that aims to automate the tedious process of finding new wallpapers, downloading and switching them via the configs. **Styli.sh** can search for specific wallpapers from unsplash or download
+luvwall is a Bash script that aims to automate the tedious process of finding new wallpapers, downloading and switching them via the configs. **Luvwall** can search for specific wallpapers from unsplash or download
 a random image from the specified subreddits. If you have pywal it also can set automatically your terminal colors.
 
-# What changes this fork does?
+# what changes does this fork make?
 
-* remove lines relatives to native gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
+* remove lines relative to native gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
 * change some deprecated syntax like backticks in variables instead of S()
 * added nasa image of the day
 * (minor) the image by default is saved on the ram witch not do constant writing to hard drives when specially you use this utility very often. (This can be changed, of course)
+
+I've just modified it a little bit for my use case.
 
 ![Preview](preview.png)
 
