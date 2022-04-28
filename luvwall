@@ -5,7 +5,7 @@ link="https://source.unsplash.com/random/"
 
 [ -z "${XDG_CACHE_HOME}" ] && XDG_CACHE_HOME="${HOME}/.cache"
 
-confdir="${XDG_CONFIG_HOME}/styli.sh"
+confdir="${XDG_CONFIG_HOME}/luvwall"
 
 [ -d "${confdir}" ] || mkdir -p "${confdir}"
 
@@ -230,7 +230,7 @@ nasa_image() {
 
 
 usage(){
-    echo "Usage: styli.sh [-s | --search <string>]
+    echo "Usage: luvwall [-s | --search <string>]
     [-h | --height <height>]
     [-w | --width <width>]
     [-b | --fehbg <feh bg opt>]
