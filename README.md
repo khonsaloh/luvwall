@@ -1,90 +1,80 @@
 # Styli.sh - Wallpaper switching made easy
 
-
 Styli.sh is a Bash script that aims to automate the tedious process of finding new wallpapers, downloading and switching them via the configs. **Styli.sh** can search for specific wallpapers from unsplash or download
 a random image from the specified subreddits. If you have pywal it also can set automatically your terminal colors.
+
+# What changes this fork does?
+
+* remove lines relatives to native gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
+* change some deprecated syntax like backticks in variables instead of S()
+* added nasa image of the day
+* (minor) the image by default is saved on the ram witch not do constant writing to hard drives when specially you use this utility very often. (This can be changed, of course)
 
 ![Preview](preview.png)
 
 ## Requirements
 
-This script is made to work with ```feh```, ```nitrogen```, 
-```XFCE```, ```GNOME```, ```KDE``` or  ```Sway```, having one of those is a requirement.```
+This script is made to work with ```feh```,  or  ```Sway```, having one of those is a requirement.```
 ## Install
 ```
-git clone https://github.com/thevinter/styli.sh
-cd styli.sh
-./styli.sh
+git clone https://github.com/khonsaloh/luvwall
+sudo make install luvwall
 ```
 
 ## Usage
 ```
 # To set a random 1920x1080 background
-$ ./styli.sh
+$ luvwall
 
 # Save the current image to ~/Pictures directory
-$ ./styli.sh -sa
+$ luvwall -S
 
 # To specify a desired width or height
-$ ./styli.sh -w 1080 -h 720
-$ ./styli.sh -w 2560
-$ ./styli.sh -h 1440
+$ luvwall -w 1080 -h 720
+$ luvwall -w 2560
+$ luvwall -h 1440
 
 # To set a wallpaper based on a search term
-$ ./styli.sh -s island
-$ ./styli.sh -s "sea sunset"
-$ ./styli.sh -s sea -w 1080
+$ luvwall -s island
+$ luvwall -s "sea sunset"
+$ luvwall -s sea -w 1080
 
 # To get a random wallpaper from one of the set subreddits
 # NOTE: The width/height/search parameters DON'T work with reddit
-$ ./styli.sh -l reddit
+$ luvwall -l reddit
 
 # To get a random wallpaper from a custom subreddit
-$ ./styli.sh -r <custom_reddit>
-$ ./styli.sh -r wallpaperdump
+$ luvwall -r <custom_reddit>
+$ luvwall -r wallpaperdump
 
 # To use the builtin feh --bg options
-$ ./styli.sh -b <option>
-$ ./styli.sh -b bg-scale -r widescreen-wallpaper
+$ luvwall -b <option>
+$ luvwall -b bg-scale -r widescreen-wallpaper
 
 # To add custom feh flags
-$ ./styli.sh -c <flags>
-$ ./styli.sh -c --no-xinerama -r widescreen-wallpaper
+$ luvwall -c <flags>
+$ luvwall -c --no-xinerama -r widescreen-wallpaper
 
 # To automatically set the terminal colors
-$ ./styli.sh -p
+$ luvwall -p
 
 # To use nitrogen instead of feh
-$ ./styli.sh -n
+$ luvwall -n
 
 # To update > 1 screens using nitrogen
-$ ./styli.sh -n -m <number_of_screens>
+$ luvwall -n -m <number_of_screens>
 
 # Choose a random background from a directory
-$ ./styli.sh -d /path/to/dir
-```
-## KDE, GNOME, XFCE & Sway
-KDE, GNOME, XFCE and Sway are natively supported without the need of feh. The script currently does not allow to scale the image.
-To use their built-in background managers use the appropriate flag.
-
-```
-# GNOME
-$ ./styli.sh -g
-
-# XFCE
-$ ./styli.sh -x
-
-# KDE
-$ ./styli.sh -k
+$ luvwall -d /path/to/dir
 
 # Sway
-$ ./styli.sh -y
+$ luvwall -y
 ```
 
 ## Tips And Tricks
 To set a new background every time you reboot your computer add the following to your ```i3/config``` file (or any other WM config)
 ```
-exec_always path/to/script/styli.sh
+exec_always path/to/script/luvwall
 ```
 
 To change background every hour launch the following command
@@ -93,12 +83,9 @@ crontab -e
 ```
 and add the following to the opened file
 ```
-@hourly path/to/script/styli.sh
+@hourly path/to/script/luvwall
 ```
 
 ## Custom subreddits
 To manage custom subreddits just edit the ```subreddits``` file by placing there all your desired communities, one for each newline
 
-## TODO
-* Cinnamon support
-* Remove the need for flags by reading `$DESKTOP_SESSION`
