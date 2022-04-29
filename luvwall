@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 link="https://source.unsplash.com/random/"
 
-#[ -z "${XDG_CONFIG_HOME}" ] && XDG_CONFIG_HOME="${HOME}/.config"
-
-#[ -z "${XDG_CACHE_HOME}" ] && XDG_CACHE_HOME="${HOME}/.cache"
-
-#confdir="${XDG_CONFIG_HOME}/luvwall"
-
-#[ -d "${confdir}" ] || mkdir -p "${confdir}"
-
 #environment variables
 : "${LUVWALL_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/luvwall.conf}"
 
@@ -17,9 +9,10 @@ link="https://source.unsplash.com/random/"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
 : "${wall_save_path:=${HOME}/Pictures/wallpaper${RANDOM}.jpg}"
+: "${download_location:=/tmp/luvwall/wallpaper.jpg}"
 
 #this location is usually mounted on ram so many operations of writing doesn't affect your drives
-cachedir="/tmp/livewall"
+: "${cachedir:=/tmp/livewall}"
 
 [ -d "${cachedir}" ] || mkdir -p "${cachedir}"
 
@@ -144,7 +137,7 @@ top_time=$3
 
 [ -z "$top_time" ] && top_time=""
 
-if [ ! -z $1 ]; then
+if [ -n "$1" ]; then
     sub=$1
 else
     if [ ! -f "${confdir}/subreddits" ]; then
@@ -231,7 +224,7 @@ nasa_image() {
     token_file="$HOME"/.local/share/tokens/nasa
     [ -f "token_file" ] && read -r token < "$token_file" || token=DEMO_KEY    
     wget $(curl -sf "https://api.nasa.gov/planetary/apod?api_key=$token" \
-      |jq ".url"| tr -d '"') -O $wallpaper && $wallpaper_setter $wallpaper
+      |jq -r ".url") -O $wallpaper && $wallpaper_setter $wallpaper
 
 }
 
@@ -300,30 +293,6 @@ pywal_cmd() {
     
 }
 
-sway_cmd() {
-    if [ -n "$bgtype" ]; then
-        if [ $bgtype == 'bg-center'  ]; then
-            mode="center"
-        fi
-        if [ $bgtype == 'bg-fill' ]; then
-            mode="fill"
-        fi
-        if [ $bgtype == 'bg-max' ]; then
-            mode="fit"
-        fi
-        if [ $bgtype == 'bg-scale'	]; then
-            mode="stretch"
-        fi
-        if [ $bgtype == 'bg-tile'  ]; then
-            mode="tile"
-        fi
-    else
-        mode="stretch"
-    fi
-    swaymsg output "*" bg "${wallpaper}" "${mode}"
-    
-}
-
 wallpaper_prog_cmd() {
     local feh=($wallpaper_setter)
     if [ -n "$bgtype" ]; then
@@ -345,10 +314,9 @@ wallpaper_prog_cmd() {
 
 pywal=0
 light=0
-sway=false
 monitors=1
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,monitors:,termcolor:,nasa:,lighwal:,sway,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,monitors:,termcolor:,nasa:,lighwal:,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
@@ -372,7 +340,6 @@ do
         -n | --nasa) nasa_image ; exit; shift ;;
         -p | --termcolor) pywal=1 ; shift ;;
         -L | --lightwal)  light=1 ; shift ;;
-        -y | --sway)      sway=true ; shift ;;
         -- | '') shift; break ;;
         *) echo "Unexpected option: $1 - this should not happen." ; usage ;;
     esac
@@ -392,10 +359,6 @@ fi
 
 type_check
 
-if [ $sway = true ]; then
-    sway_cmd
-else
-    wallpaper_prog_cmd
-fi
+wallpaper_prog_cmd
 
 pywal_cmd
