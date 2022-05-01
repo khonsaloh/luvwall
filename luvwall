@@ -182,9 +182,7 @@ unsplash() {
         link="${link}1920x1080";
     fi
     
-    if [ -n "$search" ]; then
-        link="${link}/?${search}"
-    fi
+    [ -n "$search" ] && link="${link}/?${search}"
     
     wget -q -O ${wallpaper} $link
 }
@@ -229,7 +227,11 @@ nasa_image() {
 }
 
 #bing, wallhaven,pixabay,pexels
-
+wallhaven() {
+    link=wallhaven
+    wget $(curl -s -G "https://wallhaven.cc/api/v1/search" \
+                    -d "q=$1" | jq -r '.data[].path' | shuf -n 1)
+}
 
 usage(){
     echo "Usage: luvwall [-s | --search <string>]
@@ -240,11 +242,11 @@ usage(){
     [-a | --artist <deviant artist>]
     [-r | --subreddit <subreddit>]
     [-l | --link <source>]
+    [-wh | --wallhaven <search>]
     [-p | --termcolor]
     [-L | --lightwal]
     [-d | --directory]
     [-n | --nasa]
-    [-m | --monitors <monitor count (nitrogen)>]
     [-S | --save]    <Save current image to pictures directory>
     "
     exit 2
@@ -269,8 +271,8 @@ type_check() {
     fi
 }
 
-select_random_wallpaper () {
-    wallpaper=$(find $dir -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.svg" -o -iname "*.gif" \) -print | shuf -n 1)
+select_local_random_wallpaper () {
+    wallpaper=$(find $dir -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png"  -o -iname "*.gif" \) -print | shuf -n 1)
 }
 
 pywal_cmd() {
@@ -303,9 +305,7 @@ wallpaper_prog_cmd() {
         feh+=($wallpaper_setter)
     fi
     
-    if [ -n "$custom" ]; then
-        feh+=($custom)
-    fi
+    [ -n "$custom" ] && feh+=($custom)
     
     feh+=(${wallpaper})
     
@@ -314,9 +314,8 @@ wallpaper_prog_cmd() {
 
 pywal=0
 light=0
-monitors=1
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,monitors:,termcolor:,nasa:,lighwal:,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
@@ -326,7 +325,6 @@ fi
 while :
 do
     case "${1}" in
-        -b | --fehbg)     bgtype=${2} ; shift 2 ;;
         -s | --search)    search=${2} ; shift 2 ;;
         -S | --save)    save=true ; shift ;;
         -h | --height)    height=${2} ; shift 2 ;;
@@ -334,25 +332,26 @@ do
         -l | --link)      link=${2} ; shift 2 ;;
         -r | --subreddit) sub=${2} ; shift 2 ;;
         -a | --artist) artist=${2} ; shift 2 ;;
-        -c | --fehopt)    custom=${2} ; shift 2 ;;
-        -m | --monitors)  monitors=${2} ; shift 2 ;;
         -d | --directory) dir=${2} ; shift 2 ;;
         -n | --nasa) nasa_image ; exit; shift ;;
         -p | --termcolor) pywal=1 ; shift ;;
         -L | --lightwal)  light=1 ; shift ;;
+        -wh | --wallhaven) search=${2}; shift 2;;
         -- | '') shift; break ;;
         *) echo "Unexpected option: $1 - this should not happen." ; usage ;;
     esac
 done
 
 if [ -n "$dir" ]; then
-    select_random_wallpaper
+    select_local_random_wallpaper
 elif [ "$link" = "reddit" ] || [ -n "$sub" ]; then
     reddit "$sub"
 elif [ "$link" = "deviantart" ] || [ -n "$artist" ]; then
     deviantart "$artist"
 elif [ -n "$save" ]; then
     save_cmd
+elif [ "$link" = "wallhaven" ]; then
+    wallhaven
 else
     unsplash
 fi

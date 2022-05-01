@@ -5,23 +5,21 @@ a random image from the specified subreddits. If you have pywal it also can set 
 
 # what changes does this fork make?
 
-* remove lines relative to native gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
-* change some deprecated syntax like backticks in variables instead of S()
-* added nasa image of the day (requires jq)
+* remove lines relative to gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
+* change some deprecated syntax like backsticks in variables instead of S()
+* added nasa image of the day (requires jq) and wallhaven
 * (minor) the image by default is saved on the ram witch not do constant writing to hard drives when specially you use this utility very often. (This can be changed, of course)
 
 I've just modified it a little bit for my use case.
 
 ![Preview](preview.png)
 
-## Requirements
-
-This script is made to work with ```feh```,  or  ```Sway```, having one of those is a requirement.```
 ## Install
 ```
 git clone https://github.com/khonsaloh/luvwall
 sudo make install
 ```
+or just put the script in the path
 ## Uninstall
 
 ```
@@ -54,10 +52,6 @@ $ luvwall -l reddit
 $ luvwall -r <custom_reddit>
 $ luvwall -r wallpaperdump
 
-# To use the builtin feh --bg options
-$ luvwall -b <option>
-$ luvwall -b bg-scale -r widescreen-wallpaper
-
 # To add custom feh flags
 $ luvwall -c <flags>
 $ luvwall -c --no-xinerama -r widescreen-wallpaper
@@ -65,17 +59,12 @@ $ luvwall -c --no-xinerama -r widescreen-wallpaper
 # To automatically set the terminal colors
 $ luvwall -p
 
-# To use nitrogen instead of feh
-$ luvwall -n
-
 # To update > 1 screens using nitrogen
 $ luvwall -n -m <number_of_screens>
 
 # Choose a random background from a directory
 $ luvwall -d /path/to/dir
 
-# Sway
-$ luvwall -y
 ```
 
 ## Tips And Tricks
