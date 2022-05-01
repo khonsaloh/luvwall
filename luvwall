@@ -226,12 +226,21 @@ nasa_image() {
 
 }
 
-#bing,pixabay,pexels
+#bing,pexels
 wallhaven() {
     link=wallhaven
     wget $(curl -s -G "https://wallhaven.cc/api/v1/search" \
                     -d "q=$1" | jq -r '.data[].path' | shuf -n 1)
 }
+
+pixabay() {
+    link=pixabay
+    wget $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo" \
+      | jq -r '.hits[].largeImageURL' | shuf -n 1)
+}
+
+
+
 
 usage(){
     echo "Usage: luvwall [-s | --search <string>]
@@ -315,7 +324,7 @@ wallpaper_prog_cmd() {
 pywal=0
 light=0
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,wallhaven:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,pixabay:,wallhaven:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
@@ -337,6 +346,7 @@ do
         -p | --termcolor) pywal=1 ; shift ;;
         -L | --lightwal)  light=1 ; shift ;;
         -wh | --wallhaven) search=${2}; shift 2;;
+        -pb | --pixabay) search=${2}; shift 2;;
         -- | '') shift; break ;;
         *) echo "Unexpected option: $1 - this should not happen." ; usage ;;
     esac
@@ -352,6 +362,8 @@ elif [ -n "$save" ]; then
     save_cmd
 elif [ "$link" = "wallhaven" ]; then
     wallhaven
+elif [ "$link" = "pixabay" ]; then
+    pixabay
 else
     unsplash
 fi
