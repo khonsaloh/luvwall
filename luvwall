@@ -226,7 +226,7 @@ nasa_image() {
 
 }
 
-#bing, wallhaven,pixabay,pexels
+#bing,pixabay,pexels
 wallhaven() {
     link=wallhaven
     wget $(curl -s -G "https://wallhaven.cc/api/v1/search" \
@@ -315,7 +315,7 @@ wallpaper_prog_cmd() {
 pywal=0
 light=0
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:r:a:c:d:m:pnLy:S --long search:,height:,width:,fehbg:,fehopt:,wallhaven:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
