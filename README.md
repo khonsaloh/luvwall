@@ -7,7 +7,7 @@ a random image from the specified subreddits. If you have pywal it also can set 
 
 * remove lines relative to gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
 * change some deprecated syntax like backsticks in variables instead of S()
-* added nasa image of the day, wallhaven, pixabay (all these requires jq)
+* added nasa image of the day, wallhaven, pexels, pixabay (all these requires jq)
 * (minor) the image by default is saved on the ram witch not do constant writing to hard drives when specially you use this utility very often. (This can be changed, of course)
 
 I've just modified it a little bit for my use case.
