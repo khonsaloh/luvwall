@@ -1,14 +1,13 @@
 # Luvwall - Wallpaper switching made easy
 
-luvwall is a Bash script that aims to automate the tedious process of finding new wallpapers, downloading and switching them via the configs. **Luvwall** can search for specific wallpapers from unsplash or download
-a random image from the specified subreddits. If you have pywal it also can set automatically your terminal colors.
+luvwall is a Bash script (sort of wallpaper manager) that aims to automate the tedious process of finding new wallpapers. If you have pywal it also can set automatically your terminal colors.
 
 # what changes does this fork make?
 
 * remove lines relative to gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
 * change some deprecated syntax like backsticks in variables instead of S()
-* added nasa image of the day, wallhaven, pexels, pixabay (all these requires jq)
-* (minor) the image by default is saved on the ram witch not do constant writing to hard drives when specially you use this utility very often. (This can be changed, of course)
+* added nasa image of the day, wallhaven, pexels, pixabay (all these require jq)
+* (minor) the image by default is saved on the ram wich does not constant write hard drives when specially you use this utility very often. (This can be changed, of course)
 
 I've just modified it a little bit for my use case.
 
@@ -44,6 +43,9 @@ $ luvwall -s island
 $ luvwall -s "sea sunset"
 $ luvwall -s sea -w 1080
 
+# To set a static wallpaper
+$ luvwall -e
+
 # To get a random wallpaper from one of the set subreddits
 # NOTE: The width/height/search parameters DON'T work with reddit
 $ luvwall -l reddit
@@ -51,10 +53,6 @@ $ luvwall -l reddit
 # To get a random wallpaper from a custom subreddit
 $ luvwall -r <custom_reddit>
 $ luvwall -r wallpaperdump
-
-# To add custom feh flags
-$ luvwall -c <flags>
-$ luvwall -c --no-xinerama -r widescreen-wallpaper
 
 # To automatically set the terminal colors
 $ luvwall -p

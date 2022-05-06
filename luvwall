@@ -226,7 +226,7 @@ nasa_image() {
 
 }
 
-#bing,pexels
+#bing
 wallhaven() {
     link=wallhaven
     wget $(curl -s -G "https://wallhaven.cc/api/v1/search" \
@@ -245,6 +245,11 @@ pexels() {
     "https://api.pexels.com/v1/search?query=$1" | jq -r '.photos[].src.medium')"
 }
 
+fijo() {
+  [ -f "$HOME"/.local/share/fondo.txt ] \
+    || : > "$HOME"/.local/share/fondo.txt
+  $wallpaper_setter "$(cat "$HOME"/.local/share/fondo.txt)"
+}
 
 usage(){
     echo "Usage: luvwall [-s | --search <string>]
@@ -259,8 +264,9 @@ usage(){
     [-p | --termcolor]
     [-L | --lightwal]
     [-d | --directory]
+    [-e | --established]
     [-pb | --pixabay <search>]
-    [-px | --pixels <search>]
+    [-px | --pexels <search>]
     [-n | --nasa]
     [-S | --save]    <Save current image to pictures directory>
     "
@@ -330,7 +336,7 @@ wallpaper_prog_cmd() {
 pywal=0
 light=0
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:px:wh:r:pb:a:c:d:m:pnLy:S --long search:,height:,pexels:,width:,fehbg:,fehopt:,pixabay:,wallhaven:,artist:,subreddit:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:b:px:wh:r:pb:a:c:d:m:penLy:S --long search:,height:,pexels:,width:,fehbg:,fehopt:,pixabay:,wallhaven:,artist:,subreddit:,established:,directory:,termcolor:,nasa:,lighwal:,save -- "$@")
 
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
@@ -349,6 +355,7 @@ do
         -a | --artist) artist=${2} ; shift 2 ;;
         -d | --directory) dir=${2} ; shift 2 ;;
         -n | --nasa) nasa_image ; exit; shift ;;
+        -e | --established) fijo ; exit; shift ;;
         -p | --termcolor) pywal=1 ; shift ;;
         -L | --lightwal)  light=1 ; shift ;;
         -wh | --wallhaven) search=${2}; shift 2;;
