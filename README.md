@@ -5,8 +5,8 @@ luvwall is a Bash script (sort of wallpaper manager) that aims to automate the t
 # what changes does this fork make?
 
 * remove lines relative to gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
-* change some deprecated syntax like backsticks in variables instead of S()
-* added nasa image of the day, wallhaven, pexels, pixabay (all these require jq)
+* changed deprecated syntax
+* added nasa image of the day, wallhaven, bing, pexels, pixabay (all these require jq)
 * (minor) the image by default is saved on the ram wich does not constant write hard drives when specially you use this utility very often. (This can be changed, of course)
 
 I've just modified it a little bit for my use case.
@@ -56,9 +56,6 @@ $ luvwall -r wallpaperdump
 
 # To automatically set the terminal colors
 $ luvwall -p
-
-# To update > 1 screens using nitrogen
-$ luvwall -n -m <number_of_screens>
 
 # Choose a random background from a directory
 $ luvwall -d /path/to/dir
