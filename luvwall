@@ -225,19 +225,19 @@ nasa_image() {
 wallhaven() {
     link=wallhaven
     wget -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
-                    -d "q=$1" | jq -r '.data[].path' | shuf -n 1)
+                    -d "q=$1" | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
 
 pixabay() {
     link=pixabay
     wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo" \
-      | jq -r '.hits[].largeImageURL' | shuf -n 1)
+      | jq -r '.hits[].largeImageURL' | shuf -n 1) -O $wallpaper
 }
 
 pexels() {
     link=pexels
     wget -q "$(curl -s -H "Authorization: $pexels_api" \
-    "https://api.pexels.com/v1/search?query=$1" | jq -r '.photos[].src.medium')"
+    "https://api.pexels.com/v1/search?query=$1" | jq -r '.photos[].src.medium')" -O $wallpaper
 }
 
 fijo() {
@@ -307,10 +307,6 @@ pywal_cmd() {
 }
 
 wallpaper_prog_cmd() {
-#    local ws=($wallpaper_setter)
-#    ws+=($wallpaper_setter)
-#    ws+=(${wallpaper})
-#    "${ws[@]}"
     $wallpaper_setter $wallpaper
 }
 
@@ -340,9 +336,9 @@ while :; do
         -B | --bing) link=bing ; shift;;
         -p | --termcolor) pywal=1 ; shift ;;
         -L | --lightwal)  light=1 ; shift ;;
-        -wh | --wallhaven) search=${2}; shift 2;;
-        -pb | --pixabay) search=${2}; shift 2;;
-        -px | --pexels) search=${2}; shift 2;;
+        -wh | --wallhaven) search=${2}; link=wallhaven ; shift 2;;
+        -pb | --pixabay) search=${2}; link=pixabay; shift 2;;
+        -px | --pexels) search=${2}; link=pexels; shift 2;;
         -- | '') shift; break ;;
         *) usage ;;
     esac
@@ -357,11 +353,11 @@ elif [ "$link" = "reddit" ] || [ -n "$sub" ]; then
 elif [ "$link" = "deviantart" ] || [ -n "$artist" ]; then
     deviantart "$artist"
 elif [ "$link" = "wallhaven" ]; then
-    wallhaven
-elif [ "$link" = "pixabay" ]; then
-    pixabay
+    wallhaven $search
 elif [ "$link" = "pexels" ]; then
-    pexels
+    pexels $search
+elif [ "$link" = "pixabay" ]; then
+    pixabay $search
 elif [ "$link" = "bing" ]; then
     bing
 elif [ "$link" = "nasa" ]; then
