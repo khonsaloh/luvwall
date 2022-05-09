@@ -10,6 +10,7 @@ link="https://source.unsplash.com/random/"
 : "${wallpaper_setter:=xwallpaper --zoom}"
 : "${wall_save_path:=${HOME}/Pictures/wallpaper${RANDOM}.jpg}"
 : "${download_location:=/tmp/luvwall/wallpaper.jpg}"
+: "${useragent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 
 #this location is usually mounted on ram so many operations of writing doesn't affect your drives
 : "${cachedir:=/tmp/livewall}"
@@ -18,13 +19,17 @@ link="https://source.unsplash.com/random/"
 
 wallpaper="${cachedir}/wallpaper.jpg"
 
-save_cmd(){
-    cp -i "${wallpaper}" "${wall_save_path}"
-}
-
 die() {
     printf "ERR: %s\n" "$1" >&2
     exit 1
+}
+
+wallpaper_prog_cmd() {
+    $wallpaper_setter $wallpaper
+}
+
+save_cmd(){
+    cp -i "${wallpaper}" "${wall_save_path}"
 }
 
 # https://github.com/egeesin/alacritty-color-export
@@ -128,7 +133,6 @@ printf "'%s' exported to '%s'\n" "$SRC" "$CFG"
 }
 
 reddit(){
-useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
 timeout=60
 
 sort=$2
@@ -225,7 +229,7 @@ nasa_image() {
 wallhaven() {
     link=wallhaven
     wget -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
-                    -d "q=$1" | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
+                    -d "q=$1" -d "atleast=1920x1080" | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
 
 pixabay() {
@@ -236,7 +240,7 @@ pixabay() {
 
 pexels() {
     link=pexels
-    wget -q "$(curl -s -H "Authorization: $pexels_api" \
+    wget -q -U $useragent "$(curl -s -H "Authorization: $pexels_api" \
     "https://api.pexels.com/v1/search?query=$1" | jq -r '.photos[].src.medium')" -O $wallpaper
 }
 
@@ -255,18 +259,18 @@ usage(){
     echo "Usage: ${0##*/} [-s | --search <string>]
     -h  | --height <height>
     -w  | --width <width>
-    -B  | --bing
-    -a  | --artist <deviant artist>
-    -r  | --subreddit <subreddit>
     -l  | --link <source>
-    -wh | --wallhaven <search>
     -p  | --termcolor
     -L  | --lightwal
-    -d  | --directory
+    -d  | --directory </path/to/dir>
     -e  | --established
+    -a  | --artist <deviant artist>
+    -B  | --bing
+    -n  | --nasa
     -pb | --pixabay <search>
     -px | --pexels <search>
-    -n  | --nasa
+    -r  | --subreddit <subreddit>
+    -wh | --wallhaven <search>
     -S  | --save <Save current image to directory>
     "
     exit 2
@@ -306,14 +310,10 @@ pywal_cmd() {
     fi
 }
 
-wallpaper_prog_cmd() {
-    $wallpaper_setter $wallpaper
-}
-
 pywal=0
 light=0
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:px:wh:r:pb:a:c:d:peBnLy:S \
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:px:wh:r:pb:a:d:peBnLS \
   --long search:,height:,pexels:,width:,bing,pixabay:,wallhaven:,artist:, \
   subreddit:,established,directory:,termcolor:,nasa,lighwal:,save -- "$@")
 
@@ -324,7 +324,7 @@ fi
 while :; do
     case "${1}" in
         -s | --search)    search=${2} ; shift 2 ;;
-        -S | --save)    save=true ; shift ;;
+        -S | --save)    save_cmd; exit ;;
         -h | --height)    height=${2} ; shift 2 ;;
         -w | --width)     width=${2} ; shift 2 ;;
         -l | --link)      link=${2} ; shift 2 ;;
@@ -346,8 +346,6 @@ done
 
 if [ -n "$dir" ]; then
     select_local_random_wallpaper
-elif [ -n "$save" ]; then
-    save_cmd
 elif [ "$link" = "reddit" ] || [ -n "$sub" ]; then
     reddit "$sub"
 elif [ "$link" = "deviantart" ] || [ -n "$artist" ]; then
