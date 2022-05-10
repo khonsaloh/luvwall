@@ -25,7 +25,7 @@ die() {
 }
 
 wallpaper_prog_cmd() {
-    $wallpaper_setter $wallpaper
+    $wallpaper_setter "$wallpaper"
 }
 
 save_cmd(){
@@ -134,7 +134,6 @@ printf "'%s' exported to '%s'\n" "$SRC" "$CFG"
 
 reddit(){
 timeout=60
-
 sort=$2
 top_time=$3
 [ -z "$sort" ] && sort="hot"
@@ -175,7 +174,7 @@ target_id=${arrIDS[$idx]}
 pre_ext=$(echo -n "${target_url##*.}") #|cut -d '?' -f 1)
 ext=${pre_ext%?*}
 newname=$(echo $target_name | sed "s/^\///;s/\// /g")_"$subreddit"_$target_id.$ext
-wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O ${wallpaper} $target_url &>/dev/null
+wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $target_url &>/dev/null
 }
 
 unsplash() {
@@ -187,7 +186,7 @@ unsplash() {
     fi
     
     [ -n "$search" ] && link="${link}/?${search}"
-    wget -q -O ${wallpaper} $link
+    wget -q -O "${wallpaper}" $link
 }
 
 deviantart(){
@@ -206,11 +205,16 @@ deviantart(){
         fi
     else
         #url="https://www.deviantart.com/api/v1/oauth2/browse/hot?limit=24&offset=${offset}"
-        topics=( "adoptables" "artisan-crafts" "anthro" "comics" "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture" "science-fiction" "traditional-art" "street-photography" "street-art" "pixel-art" "wallpaper" "digital-art" "photo-manipulation" "science-fiction" "fractal" "game-art" "fantasy" "3d" "drawings-and-paintings" "game-art" )
+        topics=( "adoptables" "artisan-crafts" "anthro" "comics" 
+          "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture"
+          "science-fiction" "traditional-art" "street-photography" "street-art" 
+          "pixel-art" "wallpaper" "digital-art" "photo-manipulation" "science-fiction" "fractal"
+          "game-art" "fantasy" "3d" "drawings-and-paintings" "game-art" )
         rand=$((RANDOM % ${#topics[@]}))
         url="https://www.deviantart.com/api/v1/oauth2/browse/topic?limit=24&topic=${topics[$rand]}"
     fi
-    content=$(curl --silent -H "Authorization: Bearer ${access_token}" -H "Accept: application/json" -H "Content-Type: application/json" $url)
+    content=$(curl --silent -H "Authorization: Bearer ${access_token}" \
+      -H "Accept: application/json" -H "Content-Type: application/json" $url)
     urls=$(echo -n $content | jq -r '.results[].content.src')
     arrURLS=($urls)
     size=${#arrURLS[@]}
@@ -220,27 +224,23 @@ deviantart(){
 }
 
 nasa_image() {
-    link=nasa
     [ -z "$nasa_api" ] && nasa_api=DEMO_KEY
-    wget -q $(curl -sf "https://api.nasa.gov/planetary/apod?api_key=$nasa_api" \
+    wget -T 10 -q $(curl -sf "https://api.nasa.gov/planetary/apod?api_key=$nasa_api" \
       |jq -r ".url") -O $wallpaper
 }
 
 wallhaven() {
-    link=wallhaven
-    wget -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
+    wget -T 10 -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
                     -d "q=$1" -d "atleast=1920x1080" | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
 
 pixabay() {
-    link=pixabay
     wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo" \
       | jq -r '.hits[].largeImageURL' | shuf -n 1) -O $wallpaper
 }
 
 pexels() {
-    link=pexels
-    wget -q -U $useragent "$(curl -s -H "Authorization: $pexels_api" \
+    wget -q -U $useragent "$(curl --user-agent $useragent -s -H "Authorization: $pexels_api" \
     "https://api.pexels.com/v1/search?query=$1" | jq -r '.photos[].src.medium')" -O $wallpaper
 }
 
@@ -277,7 +277,7 @@ usage(){
 }
 
 type_check() {
-    mime_types=("image/bmp" "image/jpeg" "image/gif" "image/png" "image/heic")
+    mime_types=("image/jpeg" "image/png" "image/bmp" "image/gif" "image/heic")
     isType=false
     
     for requiredType in "${mime_types[@]}"; do
@@ -299,19 +299,11 @@ select_local_random_wallpaper () {
 }
 
 pywal_cmd() {
-    if [ $pywal -eq 1 ]; then
-        wal -c; wal -i ${wallpaper} -n -q
-        [ "$TERM" = alacritty ] && alacritty_change
-    fi
-    
-    if [ $light -eq 1 ]; then
-        wal -c; wal -i ${wallpaper} -n -q -l
-        [ "$TERM" = alacritty ] && alacritty_change
-    fi
+     if [ -n "$pywall" ]; then
+       wal -c; wal -i "${wallpaper}" -n -q "${light}"
+       [ "$TERM" = alacritty ] && alacritty_change
+     fi
 }
-
-pywal=0
-light=0
 
 PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:px:wh:r:pb:a:d:peBnLS \
   --long search:,height:,pexels:,width:,bing,pixabay:,wallhaven:,artist:, \
@@ -330,12 +322,12 @@ while :; do
         -l | --link)      link=${2} ; shift 2 ;;
         -r | --subreddit) sub=${2} ; shift 2 ;;
         -a | --artist) artist=${2} ; shift 2 ;;
-        -d | --directory) dir=${2} ; shift 2 ;;
+        -L | --lightwal)  pywall=true; light='-l' ; shift ;;
+        -p | --termcolor) pywall=true ; shift ;;
+        -d | --directory) dir=${2};link=null ; shift 2 ;;
         -n | --nasa) link=nasa ; shift ;;
-        -e | --established) fijo ; exit; shift ;;
+        -e | --established) fijo ; exit;;
         -B | --bing) link=bing ; shift;;
-        -p | --termcolor) pywal=1 ; shift ;;
-        -L | --lightwal)  light=1 ; shift ;;
         -wh | --wallhaven) search=${2}; link=wallhaven ; shift 2;;
         -pb | --pixabay) search=${2}; link=pixabay; shift 2;;
         -px | --pexels) search=${2}; link=pexels; shift 2;;
@@ -344,25 +336,17 @@ while :; do
     esac
 done
 
-if [ -n "$dir" ]; then
-    select_local_random_wallpaper
-elif [ "$link" = "reddit" ] || [ -n "$sub" ]; then
-    reddit "$sub"
-elif [ "$link" = "deviantart" ] || [ -n "$artist" ]; then
-    deviantart "$artist"
-elif [ "$link" = "wallhaven" ]; then
-    wallhaven $search
-elif [ "$link" = "pexels" ]; then
-    pexels $search
-elif [ "$link" = "pixabay" ]; then
-    pixabay $search
-elif [ "$link" = "bing" ]; then
-    bing
-elif [ "$link" = "nasa" ]; then
-    nasa_image
-else
-    unsplash
-fi
+case $link in
+  null) select_local_random_wallpaper;;
+  reddit)reddit "$sub";;
+  devianart) devianart "$artist";;
+  wallhaven) wallhaven "$search";;
+  pexels) pexels "$search";;
+  pixabay) pixabay "$search";;
+  bing) bing;;
+  nasa)nasa_image;;
+  *)unsplash;;
+esac
 
 type_check
 wallpaper_prog_cmd

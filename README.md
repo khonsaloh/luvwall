@@ -25,42 +25,6 @@ or just put the script in the path
 sudo make uninstall
 ```
 
-## Usage
-```
-# To set a random 1920x1080 background
-$ luvwall
-
-# Save the current image to ~/Pictures directory
-$ luvwall -S
-
-# To specify a desired width or height
-$ luvwall -w 1080 -h 720
-$ luvwall -w 2560
-$ luvwall -h 1440
-
-# To set a wallpaper based on a search term
-$ luvwall -s island
-$ luvwall -s "sea sunset"
-$ luvwall -s sea -w 1080
-
-# To set a static wallpaper
-$ luvwall -e
-
-# To get a random wallpaper from one of the set subreddits
-# NOTE: The width/height/search parameters DON'T work with reddit
-$ luvwall -l reddit
-
-# To get a random wallpaper from a custom subreddit
-$ luvwall -r <custom_reddit>
-$ luvwall -r wallpaperdump
-
-# To automatically set the terminal colors
-$ luvwall -p
-
-# Choose a random background from a directory
-$ luvwall -d /path/to/dir
-
-```
 
 ## Tips And Tricks
 To set a new background every time you reboot your computer add the following to your ```i3/config``` file (or any other WM config)
