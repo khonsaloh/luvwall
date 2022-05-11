@@ -136,7 +136,7 @@ wallhaven() {
 
 pixabay() {
     #api limited to 500 images per search
-    random_page=$(shuf -i 0-26 -n 1)
+    random_page=$(shuf -i 1-26 -n 1)
     wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo&page=$random_page" \
       | jq -r '.hits[].largeImageURL' | shuf -n 1) -O $wallpaper
 }
@@ -145,7 +145,7 @@ pexels() {
     total_results="$(curl --user-agent $useragent -s -H "Authorization: $pexels_api" \
       "https://api.pexels.com/v1/search?query=$1&orientation=landscape" | jq '.total_results')"
     total_pages=$((total_results / 15))
-    random_page=$(shuf -i 0-$total_pages -n 1)
+    random_page=$(shuf -i 1-$total_pages -n 1)
     wget --show-progress -q -U $useragent "$(curl --user-agent $useragent -s -H "Authorization: $pexels_api" \
     "https://api.pexels.com/v1/search?query=$1&page=$random_page&orientation=landscape" \
     | jq -r '.photos[].src.large' | shuf -n 1)" -O $wallpaper
