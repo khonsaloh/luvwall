@@ -8,7 +8,6 @@ link="https://source.unsplash.com/random/"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
 : "${wall_save_path:=${HOME}/Pictures/wallpaper${RANDOM}.jpg}"
-: "${download_location:=/tmp/luvwall/wallpaper.jpg}"
 : "${useragent:='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 : "${cachedir:=/tmp/livewall}"
 
@@ -130,13 +129,20 @@ nasa_image() {
 }
 
 wallhaven() {
+    total_pages=$(curl -s -G "https://wallhaven.cc/api/v1/search" \
+      -d "q=$1&atleast=1920x1080&ratios=16x9" | jq '.meta.last_page')
+    random_page=$(shuf -i 1-$total_pages -n 1)
     wget -T 10 -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
-                    -d "q=$1" -d "atleast=1920x1080" | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
+                    -d "q=$1&atleast=1920x1080&ratios=16x9&page=$random_page" \
+                    | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
 
 pixabay() {
     #api limited to 500 images per search
-    random_page=$(shuf -i 1-26 -n 1)
+    total_images=$(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo" \
+     | jq -r '.totalHits')
+    random_page=$((total_images / 20))
+    [ $total_images -lt 21 ] && random_page=1
     wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo&page=$random_page" \
       | jq -r '.hits[].largeImageURL' | shuf -n 1) -O $wallpaper
 }
@@ -217,7 +223,7 @@ pywal_cmd() {
      fi
 }
 
-PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:px:wh:r:pb:a:d:peBnLS \
+PARSED_ARGUMENTS=$(getopt -a -n $0 -o h:w:s:l:px:wh:f:r:pb:a:d:peBnLS \
   --long search:,height:,pexels:,width:,bing,pixabay:,wallhaven:,artist:, \
   subreddit:,established,directory:,termcolor:,nasa,lighwal:,save -- "$@")
 
@@ -231,7 +237,7 @@ while :; do
         -S | --save)    save_cmd; exit ;;
         -h | --height)    height=${2} ; shift 2 ;;
         -w | --width)     width=${2} ; shift 2 ;;
-        -l | --link)      link=${2} ; shift 2 ;;
+        -l | --link)      link=link ; search=${2} ; shift 2 ;;
         -r | --subreddit) sub=${2} ; shift 2 ;;
         -a | --artist) artist=${2} ; shift 2 ;;
         -L | --lightwal)  pywall=true; light='-l' ; shift ;;
@@ -257,6 +263,7 @@ case $link in
   pixabay) pixabay "$search";;
   bing) bing;;
   nasa)nasa_image;;
+  link) wget -U "useragent" -q "$search" -O $wallpaper;;
   *)unsplash;;
 esac
 
