@@ -7,7 +7,7 @@ link="https://source.unsplash.com/random/"
 [ -f "$LUVWALL_CONFIG" ] && . "$LUVWALL_CONFIG"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
-: "${wall_save_path:=${HOME}/Pictures/wallpaper${RANDOM}.jpg}"
+: "${wall_save_path:=${XDG_PICTURES_DIR:-$HOME/Pictures}/wallpaper${RANDOM}.jpg}"
 : "${useragent:='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 : "${cachedir:=/tmp/livewall}"
 
@@ -25,7 +25,8 @@ wallpaper_prog_cmd() {
 }
 
 save_cmd(){
-    cp -i "${wallpaper}" "${wall_save_path}"
+    cp -i "${wallpaper}" "${wall_save_path}" \
+      && notify-send -t 2000 "copied to ${wall_save_path}" 2>/dev/null
 }
 
 # reddit {{{
@@ -81,7 +82,7 @@ unsplash() {
     else
         link="${link}1920x1080";
     fi
-    
+
     [ -n "$search" ] && link="${link}/?${search}"
     wget -q -O "${wallpaper}" $link
 }
@@ -103,9 +104,9 @@ deviantart(){
         fi
     else
         #url="https://www.deviantart.com/api/v1/oauth2/browse/hot?limit=24&offset=${offset}"
-        topics=( "adoptables" "artisan-crafts" "anthro" "comics" 
+        topics=( "adoptables" "artisan-crafts" "anthro" "comics"
           "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture"
-          "science-fiction" "traditional-art" "street-photography" "street-art" 
+          "science-fiction" "traditional-art" "street-photography" "street-art"
           "pixel-art" "wallpaper" "digital-art" "photo-manipulation" "science-fiction" "fractal"
           "game-art" "fantasy" "3d" "drawings-and-paintings" "game-art" )
         rand=$((RANDOM % ${#topics[@]}))
@@ -196,14 +197,14 @@ usage(){
 type_check() {
     mime_types=("image/jpeg" "image/png" "image/bmp" "image/gif" "image/heic")
     isType=false
-    
+
     for requiredType in "${mime_types[@]}"; do
         imageType=$(file -b --mime-type ${wallpaper})
         if [ "$requiredType" = "$imageType" ]; then
             isType=true; break
         fi
     done
-    
+
     if [ $isType = false ]; then
         printf '%s\n' "Downloaded file is not an image!"
         exit 1
