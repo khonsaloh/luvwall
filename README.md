@@ -16,7 +16,8 @@ I've just modified it a little bit for my use case.
 
 ## Install
 ```
-git clone https://github.com/khonsaloh/luvwall
+git clone --depth=1 https://github.com/khonsaloh/luvwall
+cd luvwall
 sudo make install
 ```
 or just put the script in the path
