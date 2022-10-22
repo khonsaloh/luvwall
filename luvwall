@@ -5,7 +5,7 @@
 [ -f "$LUVWALL_CONFIG" ] && . "$LUVWALL_CONFIG"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
-: "${wall_save_path:=${XDG_PICTURES_DIR:-$HOME/Pictures}/wallpaper${RANDOM}.jpg}"
+: "${wall_save_path:=${XDG_PICTURES_DIR:=$HOME/Pictures}/wallpaper${RANDOM}.jpg}"
 : "${useragent:='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 : "${cachedir:=/tmp/livewall}"
 
@@ -159,7 +159,7 @@ pexels() {
 }
 
 fijo() {
-  $wallpaper_setter "$(cat "$HOME"/.local/share/fondo.txt)"
+  $wallpaper_setter "$(cat "${XDG_CACHE_HOME:=$HOME/.cache}"/fondo.txt)"
 }
 
 bing() {
