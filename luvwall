@@ -222,7 +222,7 @@ pywal_cmd() {
      fi
 }
 
-while getopts 'eSbnNs:d:w:p:x:' o; do
+while getopts 'eSbrnaNs:d:w:p:x:l:H:W:' o; do
     case "$o" in
         e) fijo ; exit;;
         S) save_cmd; exit ;;
