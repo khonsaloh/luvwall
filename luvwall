@@ -9,6 +9,7 @@
 : "${useragent:='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 : "${cachedir:=/tmp/livewall}"
 
+timeout=60
 confdir=${XDG_CONFIG_HOME:-$HOME/.config}
 
 [ -d "${cachedir}" ] || mkdir -p "${cachedir}"
@@ -32,44 +33,43 @@ save_cmd(){
 
 # reddit {{{
 reddit(){
-timeout=60
-sort=$2
-top_time=$3
-[ -z "$sort" ] && sort="hot"
-[ -z "$top_time" ] && top_time=""
-
-if [ -n "$1" ]; then
-    sub=$1
-else
-    if [ ! -f "${confdir}/subreddits" ]; then
-        die "Please install the subreddits file in ${confdir}"
-    fi
-    readarray subreddits < "${confdir}/subreddits"
-    a=${#subreddits[@]}
-    b=$((RANDOM % a))
-    sub=${subreddits[$b]}
-    sub="$(echo -e "${sub}" | tr -d '[:space:]')"
-fi
-
-url="https://www.reddit.com/r/$sub/$sort/.json?raw_json=1&t=$top_time"
-content=$(wget -T $timeout -U "$useragent" -q -O - $url)
-urls=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.preview.images[0].source.url')
-names=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.title')
-ids=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.id')
-arrURLS=($urls)
-arrNAMES=($names)
-arrIDS=($ids)
-wait # prevent spawning too many processes
-size=${#arrURLS[@]}
-[ "$size" -eq 0 ] && die "The current subreddit is not valid."
-idx=$((RANDOM % size))
-target_url=${arrURLS[$idx]}
-target_name=${arrNAMES[$idx]}
-target_id=${arrIDS[$idx]}
-pre_ext=$(echo -n "${target_url##*.}") #|cut -d '?' -f 1)
-ext=${pre_ext%?*}
-newname=$(echo $target_name | sed "s/^\///;s/\// /g")_"$subreddit"_$target_id.$ext
-wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $target_url &>/dev/null
+  sort=$2
+  top_time=$3
+  [ -z "$sort" ] && sort="hot"
+  [ -z "$top_time" ] && top_time=""
+  
+  if [ -n "$1" ]; then
+      sub=$1
+  else
+      if [ ! -f "${confdir}/subreddits" ]; then
+          die "Please install the subreddits file in ${confdir}"
+      fi
+      readarray subreddits < "${confdir}/subreddits"
+      a=${#subreddits[@]}
+      b=$((RANDOM % a))
+      sub=${subreddits[$b]}
+      sub="$(echo -e "${sub}" | tr -d '[:space:]')"
+  fi
+  
+  url="https://www.reddit.com/r/$sub/$sort/.json?raw_json=1&t=$top_time"
+  content=$(wget -T $timeout -U "$useragent" -q -O - $url)
+  urls=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.preview.images[0].source.url')
+  names=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.title')
+  ids=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.id')
+  arrURLS=($urls)
+  arrNAMES=($names)
+  arrIDS=($ids)
+  wait # prevent spawning too many processes
+  size=${#arrURLS[@]}
+  [ "$size" -eq 0 ] && die "The current subreddit is not valid."
+  idx=$((RANDOM % size))
+  target_url=${arrURLS[$idx]}
+  target_name=${arrNAMES[$idx]}
+  target_id=${arrIDS[$idx]}
+  pre_ext=$(echo -n "${target_url##*.}") #|cut -d '?' -f 1)
+  ext=${pre_ext%?*}
+  newname=$(echo $target_name | sed "s/^\///;s/\// /g")_"$subreddit"_$target_id.$ext
+  wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $target_url &>/dev/null
 }
 # }}}
 unsplash() {
@@ -90,6 +90,7 @@ deviantart(){
     : "${devianart_client_secret:=68c00f3d0ceab95b0fac638b33a3368e}"
     payload="grant_type=client_credentials&client_id=${devianart_client_id:=16531}&client_secret=${devianart_client_secret}"
     access_token=$(curl --silent -d $payload https://www.deviantart.com/oauth2/token | jq -r '.access_token')
+    
     if [ -n "$1" ]; then
         artist=$1
         url="https://www.deviantart.com/api/v1/oauth2/gallery/?username=${artist}&mode=popular&limit=24"
@@ -110,6 +111,7 @@ deviantart(){
         rand=$((RANDOM % ${#topics[@]}))
         url="https://www.deviantart.com/api/v1/oauth2/browse/topic?limit=24&topic=${topics[$rand]}"
     fi
+   
     content=$(curl --silent -H "Authorization: Bearer ${access_token}" \
       -H "Accept: application/json" -H "Content-Type: application/json" $url)
     urls=$(echo -n $content | jq -r '.results[].content.src')
@@ -125,7 +127,7 @@ nasa_image() {
     [ "$link" = "nasa_random" ] \
       && day=$(shuf -n1 -i $(date -d "${nasa_start_date:=2000-01-01}" '+%s')-$(date '+%s')\
       | xargs -I{} date -d '@{}' '+%Y-%m-%d') && echo "image of the day of $day"
-    wget -T 10 -q $(curl -sf -G "https://api.nasa.gov/planetary/apod?api_key=${nasa_api:-DEMO_KEY}" -d "date=$day" \
+    wget -T $timeout -q $(curl -sf -G "https://api.nasa.gov/planetary/apod?api_key=${nasa_api:-DEMO_KEY}" -d "date=$day" \
       |jq -r ".url") -O $wallpaper 2>/dev/null
 }
 
@@ -133,7 +135,7 @@ wallhaven() {
     total_pages=$(curl -s -G "https://wallhaven.cc/api/v1/search" \
       -d "q=$1&atleast=1920x1080&ratios=16x9" | jq '.meta.last_page')
     random_page=$(shuf -i 1-$total_pages -n 1)
-    wget -T 10 -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
+    wget -T $timeout -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
                     -d "q=$1&atleast=1920x1080&ratios=16x9&page=$random_page" \
                     | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
@@ -159,7 +161,7 @@ pexels() {
 }
 
 fijo() {
-  $wallpaper_setter "$(cat "${XDG_CACHE_HOME:=$HOME/.cache}"/fondo.txt)"
+  $wallpaper_setter "${XDG_CACHE_HOME:=$HOME/.cache}/fondo"
 }
 
 bing() {
@@ -171,41 +173,40 @@ bing() {
 
 # usage help {{{
 usage(){
-    echo "Usage: ${0##*/} [-s | --search <string>]
-    -h  | --height <height>
-    -w  | --width <width>
-    -l  | --link <source>
-    -p  | --termcolor
-    -L  | --lightwal
-    -d  | --directory </path/to/dir>
-    -e  | --established
-    -a  | --artist <deviant artist>
-    -B  | --bing
-    -n  | --nasa image of the day
-    -N  | --nasarandom nasa random image
-    -pb | --pixabay <search>
-    -px | --pexels <search>
-    -r  | --subreddit <subreddit>
-    -wh | --wallhaven <search>
-    -S  | --save <Save current image to directory>
-    "
+    echo "Usage: ${0##*/}
+    [-s <string>] search unsplash
+    [-h <height>]
+    [-w <width>]
+    [-l <source>] set wallpaper from link
+    [-p]  pywall
+    [-L]  pywall light color scheme
+    [-a <artist>] deviantart
+    [-b]  bing
+    [-n]  nasa image of the day
+    [-N]  nasa random image
+    [-pb <search>] pixabay
+    [-px <search>] pexels
+    [-r <subreddit>] reddit
+    [-wh <search>] wallhaven
+    [-S]  save current image to directory
+    [-e]  restore saved wallpaper
+    [-d </path/to/dir>] random image from directory"
     exit 2
 }
 #}}}
 
 # type check {{{
 type_check() {
-    mime_types=("image/jpeg" "image/png" "image/bmp" "image/gif" "image/heic")
-    isType=false
+    mime_types="image/jpeg image/png image/bmp image/gif image/heic"
 
-    for requiredType in "${mime_types[@]}"; do
-        imageType=$(file -b --mime-type ${wallpaper})
+    imageType=$(file -b --mime-type $wallpaper)
+    for requiredType in $mime_types; do
         if [ "$requiredType" = "$imageType" ]; then
             isType=true; break
         fi
     done
 
-    [ $isType = false ] && die "Downloaded file is not an image!"
+    [ "$isType" ] || die "Downloaded file is not an image!"
 }
 # }}}
 
@@ -221,33 +222,26 @@ pywal_cmd() {
      fi
 }
 
-#getopt -a -n $0 -o h:w:s:l:px:wh:f:r:pb:a:d:peBnLS \
-#  --long search:,height:,pexels:,width:,bing,pixabay:,wallhaven:,artist:, \
-#  subreddit:,established,directory:,termcolor:,nasa,lighwal:,save -- "$@" >/dev/null
-
-#echo $?
-#[ "$?" != "0" ] && usage
-
 while :; do
     case "${1}" in
-        -e | --established) fijo ; exit;;
-        -S | --save)    save_cmd; exit ;;
-        -s | --search)    search=${2} ; shift 2 ;;
-        -h | --height)    height=${2} ; shift 2 ;;
-        -w | --width)     width=${2} ; shift 2 ;;
-        -l | --link)      link=link ; search=${2} ; shift 2 ;;
-        -r | --subreddit) sub=${2} ; shift 2 ;;
-        -a | --artist) artist=${2} ; shift 2 ;;
-        -L | --lightwal)  pywall=true; light='-l' ; shift ;;
-        -p | --termcolor) pywall=true ; shift ;;
-        -d | --directory) dir=${2};link=null ; shift 2 ;;
-        -n | --nasa) link=nasa ; shift ;;
-        -N | --nasarandom) link=nasa_random ; shift ;;
-        -B | --bing) link=bing ; shift;;
-        -wh | --wallhaven) search=${2}; link=wallhaven ; shift 2;;
-        -pb | --pixabay) search=${2}; link=pixabay; shift 2;;
-        -px | --pexels) search=${2}; link=pexels; shift 2;;
-        -- | '') shift; break ;;
+        -e) fijo ; exit;;
+        -S) save_cmd; exit ;;
+        -s) search=${2} ; shift 2 ;;
+        -h) height=${2} ; shift 2 ;;
+        -w) width=${2} ; shift 2 ;;
+        -l) link=link ; search=${2} ; shift 2 ;;
+        -r) sub=${2}; link=reddit; shift 2 ;;
+        -a) artist=${2}; link=deviantart; shift 2 ;;
+        -L) pywall=true; light='-l' ; shift ;;
+        -p) pywall=true ; shift ;;
+        -d) dir=${2};link=null ; shift 2 ;;
+        -n) link=nasa; shift 2;;
+        -N) link=nasa_random ; shift ;;
+        -b) link=bing ; shift;;
+        -wh) search=${2}; link=wallhaven ; shift 2;;
+        -pb) search=${2}; link=pixabay; shift 2;;
+        -px) search=${2}; link=pexels; shift 2;;
+        '') shift; break ;;
         *) usage ;;
     esac
 done
@@ -255,12 +249,12 @@ done
 case $link in
   null) select_local_random_wallpaper;;
   reddit) reddit "$sub";;
-  devianart) devianart "$artist";;
+  deviantart) deviantart "$artist";;
   wallhaven) wallhaven "$search";;
   pexels) pexels "$search";;
   pixabay) pixabay "$search";;
   bing) bing;;
-  nasa|nasa_random) nasa_image;;
+  nasa*) nasa_image;;
   link) wget -U "$useragent" -q "$search" -O $wallpaper;;
   *)unsplash;;
 esac
