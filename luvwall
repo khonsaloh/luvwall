@@ -54,27 +54,17 @@ reddit(){
   url="https://www.reddit.com/r/$sub/$sort/.json?raw_json=1&t=$top_time"
   content=$(wget -T $timeout -U "$useragent" -q -O - $url)
   urls=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.preview.images[0].source.url')
-  names=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.title')
-  ids=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.id')
   arrURLS=($urls)
-  arrNAMES=($names)
-  arrIDS=($ids)
-  wait # prevent spawning too many processes
   size=${#arrURLS[@]}
   [ "$size" -eq 0 ] && die "The current subreddit is not valid."
   idx=$((RANDOM % size))
   target_url=${arrURLS[$idx]}
-  target_name=${arrNAMES[$idx]}
-  target_id=${arrIDS[$idx]}
-  pre_ext=$(echo -n "${target_url##*.}") #|cut -d '?' -f 1)
-  ext=${pre_ext%?*}
-  newname=$(echo $target_name | sed "s/^\///;s/\// /g")_"$subreddit"_$target_id.$ext
   wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $target_url &>/dev/null
 }
 # }}}
 unsplash() {
   link="https://source.unsplash.com/random/"
-    local search="${search// /_}"
+    local search="${search// /+}"
     if [ -n "$height" ] || [ -n "$width" ]; then
         link="${link}${width}x${height}"
     else
@@ -96,13 +86,12 @@ deviantart(){
         url="https://www.deviantart.com/api/v1/oauth2/gallery/?username=${artist}&mode=popular&limit=24"
     elif [ -n "$search" ]; then
         [[ "$search" =~ ^(tag:)(.*)$ ]] && tag=${BASH_REMATCH[2]}
-        if [ ! -z $tag ]; then
+        if [ -n "$tag" ]; then
             url="https://www.deviantart.com/api/v1/oauth2/browse/tags?tag=$tag&offset=${RANDOM:0:2}&limit=24"
         else
             url="https://www.deviantart.com/api/v1/oauth2/browse/popular?q=$search&limit=24&timerange=1month"
         fi
     else
-        #url="https://www.deviantart.com/api/v1/oauth2/browse/hot?limit=24&offset=${offset}"
         topics=( "adoptables" "artisan-crafts" "anthro" "comics"
           "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture"
           "science-fiction" "traditional-art" "street-photography" "street-art"
@@ -113,13 +102,13 @@ deviantart(){
     fi
    
     content=$(curl --silent -H "Authorization: Bearer ${access_token}" \
-      -H "Accept: application/json" -H "Content-Type: application/json" $url)
+      -H "Accept: application/json" -H "Content-Type: application/json" "$url")
     urls=$(echo -n $content | jq -r '.results[].content.src')
     arrURLS=($urls)
     size=${#arrURLS[@]}
     idx=$((RANDOM % size))
     target_url=${arrURLS[$idx]}
-    wget --no-check-certificate -q -P down -O ${wallpaper} $target_url &>/dev/null
+    wget --no-check-certificate -q -P down -O ${wallpaper} "$target_url" &>/dev/null
 }
 # }}}
 
@@ -211,36 +200,36 @@ type_check() {
 # }}}
 
 select_local_random_wallpaper () {
-    wallpaper=$(find $dir -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
+    wallpaper=$(find "$dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
       -o -iname "*.gif" \) -print | shuf -n 1)
 }
 
 pywal_cmd() {
      if [ -n "$pywall" ]; then
-       wal -c; wal -i "${wallpaper}" -n -q $light
+       wal -c; wal -i "${wallpaper}" -n -q "$light"
        [ "$TERM" = alacritty ] && alacritty_change
      fi
 }
 
-while getopts 'eSbrnaNs:d:w:p:x:l:H:W:' o; do
+while getopts 'eSLPbrnaNs:d:w:p:x:l:H:W:' o; do
     case "$o" in
-        e) fijo ; exit;;
+        e) fijo; exit;;
         S) save_cmd; exit ;;
         s) search=$OPTARG ;;
         H) height=$OPTARG ;;
         W) width=$OPTARG ;;
-        l) link=link ; search=$OPTARG ;;
-        r) sub=$OPTARG; link=reddit ;;
-        a) artist=$OPTARG; link=deviantart ;;
+        l) link='link'; search=$OPTARG ;;
+        r) sub="${OPTARG// /+}"; link=reddit ;;
+        a) artist="${OPTARG// /+}"; link=deviantart ;;
         L) pywall=true; light='-l' ;;
         P) pywall=true ;;
-        d) dir=$OPTARG;link=null ; ;;
+        d) dir=$OPTARG;link=null;;
         n) link=nasa  ;;
         N) link=nasa_random ;;
         b) link=bing ;;
-        w) search=$OPTARG; link=wallhaven ;;
-        p) search=$OPTARG; link=pixabay;;
-        x) search=$OPTARG; link=pexels;;
+        w) search="${OPTARG// /+}"; link=wallhaven;;
+        p) search="${OPTARG// /+}"; link=pixabay;;
+        x) search="${OPTARG// /+}"; link=pexels;;
         *) usage ;;
     esac
 done
@@ -256,7 +245,7 @@ case $link in
   pixabay) pixabay "$search";;
   bing) bing;;
   nasa*) nasa_image;;
-  link) wget -U "$useragent" -q "$search" -O $wallpaper;;
+  link) wget -U "$useragent" -q "$search" -O "$wallpaper";;
   *)unsplash;;
 esac
 
