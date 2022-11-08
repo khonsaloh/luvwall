@@ -85,7 +85,7 @@ unsplash() {
     wget -q -O "${wallpaper}" $link
 }
 
-# devian art {{{
+# deviant art {{{
 deviantart(){
     : "${devianart_client_secret:=68c00f3d0ceab95b0fac638b33a3368e}"
     payload="grant_type=client_credentials&client_id=${devianart_client_id:=16531}&client_secret=${devianart_client_secret}"
@@ -175,20 +175,20 @@ bing() {
 usage(){
     echo "Usage: ${0##*/}
     [-s <string>] search unsplash
-    [-h <height>]
-    [-w <width>]
-    [-l <source>] set wallpaper from link
-    [-p]  pywall
+    [-H <height>]
+    [-W <width>]
+    [-l <link>] set wallpaper from link
+    [-P]  pywall
     [-L]  pywall light color scheme
     [-a <artist>] deviantart
     [-b]  bing
     [-n]  nasa image of the day
     [-N]  nasa random image
-    [-pb <search>] pixabay
-    [-px <search>] pexels
+    [-p <search>] pixabay
+    [-x <search>] pexels
     [-r <subreddit>] reddit
-    [-wh <search>] wallhaven
-    [-S]  save current image to directory
+    [-w <search>] wallhaven
+    [-S]  save current image
     [-e]  restore saved wallpaper
     [-d </path/to/dir>] random image from directory"
     exit 2
@@ -222,29 +222,30 @@ pywal_cmd() {
      fi
 }
 
-while :; do
-    case "${1}" in
-        -e) fijo ; exit;;
-        -S) save_cmd; exit ;;
-        -s) search=${2} ; shift 2 ;;
-        -h) height=${2} ; shift 2 ;;
-        -w) width=${2} ; shift 2 ;;
-        -l) link=link ; search=${2} ; shift 2 ;;
-        -r) sub=${2}; link=reddit; shift 2 ;;
-        -a) artist=${2}; link=deviantart; shift 2 ;;
-        -L) pywall=true; light='-l' ; shift ;;
-        -p) pywall=true ; shift ;;
-        -d) dir=${2};link=null ; shift 2 ;;
-        -n) link=nasa; shift 2;;
-        -N) link=nasa_random ; shift ;;
-        -b) link=bing ; shift;;
-        -wh) search=${2}; link=wallhaven ; shift 2;;
-        -pb) search=${2}; link=pixabay; shift 2;;
-        -px) search=${2}; link=pexels; shift 2;;
-        '') shift; break ;;
+while getopts 'eSbnNs:d:wh:pb:x:' o; do
+    case "$o" in
+        e) fijo ; exit;;
+        S) save_cmd; exit ;;
+        s) search=$OPTARG ;;
+        H) height=$OPTARG ;;
+        W) width=$OPTARG ;;
+        l) link=link ; search=$OPTARG ;;
+        r) sub=$OPTARG; link=reddit ;;
+        a) artist=$OPTARG; link=deviantart ;;
+        L) pywall=true; light='-l' ;;
+        P) pywall=true ;;
+        d) dir=$OPTARG;link=null ; ;;
+        n) link=nasa  ;;
+        N) link=nasa_random ;;
+        b) link=bing ;;
+        w) search=$OPTARG; link=wallhaven ;;
+        p) search=$OPTARG; link=pixabay;;
+        x) search=$OPTARG; link=pexels;;
         *) usage ;;
     esac
 done
+
+shift $((OPTIND - 1))
 
 case $link in
   null) select_local_random_wallpaper;;
