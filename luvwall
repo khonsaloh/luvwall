@@ -11,10 +11,17 @@
 
 timeout=60
 confdir=${XDG_CONFIG_HOME:-$HOME/.config}
+#: "${wallpaper_dir:=$HOME/imagenes/wallpapers}"
 
 [ -d "${cachedir}" ] || mkdir -p "${cachedir}"
 
 wallpaper="${cachedir}/wallpaper.jpg"
+
+: "${topics:="nature night space anime"}"
+
+search() {
+  search=$(echo $topics | tr ' ' '\n'| shuf -n1)
+}
 
 die() {
     printf '\033[1;31m%s \033[0m\n' "ERR: $1" >&2
@@ -38,8 +45,8 @@ reddit(){
   [ -z "$sort" ] && sort="hot"
   [ -z "$top_time" ] && top_time=""
   
-  if [ -n "$1" ]; then
-      sub=$1
+  if [ -n "$search" ]; then
+      sub=$search
   else
       if [ ! -f "${confdir}/subreddits" ]; then
           die "Please install the subreddits file in ${confdir}"
@@ -64,7 +71,6 @@ reddit(){
 # }}}
 unsplash() {
   link="https://source.unsplash.com/random/"
-    local search="${search// /+}"
     if [ -n "$height" ] || [ -n "$width" ]; then
         link="${link}${width}x${height}"
     else
@@ -85,12 +91,7 @@ deviantart(){
         artist=$1
         url="https://www.deviantart.com/api/v1/oauth2/gallery/?username=${artist}&mode=popular&limit=24"
     elif [ -n "$search" ]; then
-        [[ "$search" =~ ^(tag:)(.*)$ ]] && tag=${BASH_REMATCH[2]}
-        if [ -n "$tag" ]; then
-            url="https://www.deviantart.com/api/v1/oauth2/browse/tags?tag=$tag&offset=${RANDOM:0:2}&limit=24"
-        else
-            url="https://www.deviantart.com/api/v1/oauth2/browse/popular?q=$search&limit=24&timerange=1month"
-        fi
+        url="https://www.deviantart.com/api/v1/oauth2/browse/popular?q=$search&limit=24&timerange=1month"
     else
         topics=( "adoptables" "artisan-crafts" "anthro" "comics"
           "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture"
@@ -100,7 +101,7 @@ deviantart(){
         rand=$((RANDOM % ${#topics[@]}))
         url="https://www.deviantart.com/api/v1/oauth2/browse/topic?limit=24&topic=${topics[$rand]}"
     fi
-   
+    
     content=$(curl --silent -H "Authorization: Bearer ${access_token}" \
       -H "Accept: application/json" -H "Content-Type: application/json" "$url")
     urls=$(echo -n $content | jq -r '.results[].content.src')
@@ -121,31 +122,34 @@ nasa_image() {
 }
 
 wallhaven() {
+    [ -z "$search" ] && search
     total_pages=$(curl -s -G "https://wallhaven.cc/api/v1/search" \
-      -d "q=$1&atleast=1920x1080&ratios=16x9" | jq '.meta.last_page')
+      -d "q=$search&atleast=1920x1080&ratios=16x9" | jq '.meta.last_page')
     random_page=$(shuf -i 1-$total_pages -n 1)
     wget -T $timeout -q $(curl -s -G "https://wallhaven.cc/api/v1/search" \
-                    -d "q=$1&atleast=1920x1080&ratios=16x9&page=$random_page" \
+                    -d "q=$search&atleast=1920x1080&ratios=16x9&page=$random_page" \
                     | jq -r '.data[].path' | shuf -n 1) -O $wallpaper
 }
 
 pixabay() {
     #api limited to 500 images per search
-    total_images=$(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo" \
+    [ -z "$search" ] && search
+    total_images=$(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$search&image_type=photo" \
      | jq -r '.totalHits')
     random_page=$((total_images / 20))
     [ $total_images -lt 21 ] && random_page=1
-    wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$1&image_type=photo&page=$random_page" \
+    wget -q $(curl -s -G "https://pixabay.com/api/?key="$pixabay_api"&q=$search&image_type=photo&page=$random_page" \
       | jq -r '.hits[].largeImageURL' | shuf -n 1) -O $wallpaper
 }
 
 pexels() {
+    [ -z "$search" ] && search
     total_results="$(curl --user-agent $useragent -s -H "Authorization: $pexels_api" \
-      "https://api.pexels.com/v1/search?query=$1&orientation=landscape" | jq '.total_results')"
+      "https://api.pexels.com/v1/search?query=$search&orientation=landscape" | jq '.total_results')"
     total_pages=$((total_results / 15))
     random_page=$(shuf -i 1-$total_pages -n 1)
     wget --show-progress -q -U $useragent "$(curl --user-agent $useragent -s -H "Authorization: $pexels_api" \
-    "https://api.pexels.com/v1/search?query=$1&page=$random_page&orientation=landscape" \
+    "https://api.pexels.com/v1/search?query=$search&page=$random_page&orientation=landscape" \
     | jq -r '.photos[].src.large' | shuf -n 1)" -O $wallpaper
 }
 
@@ -163,7 +167,7 @@ bing() {
 # usage help {{{
 usage(){
     echo "Usage: ${0##*/}
-    [-s <string>] search unsplash
+    [-s <string>] search (default unsplash if passed alone)
     [-H <height>]
     [-W <width>]
     [-l <link>] set wallpaper from link
@@ -200,7 +204,7 @@ type_check() {
 # }}}
 
 select_local_random_wallpaper () {
-    wallpaper=$(find "$dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
+    wallpaper=$(find "$wallpaper_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
       -o -iname "*.gif" \) -print | shuf -n 1)
 }
 
@@ -211,11 +215,11 @@ pywal_cmd() {
      fi
 }
 
-while getopts 'eSLPbrnaNs:d:w:p:x:l:H:W:' o; do
+while getopts 'eSLPbrwpxnaNs:d:l:H:W:' o; do
     case "$o" in
         e) fijo; exit;;
         S) save_cmd; exit ;;
-        s) search=$OPTARG ;;
+        s) search="${OPTARG// /+}";;
         H) height=$OPTARG ;;
         W) width=$OPTARG ;;
         l) link='link'; search=$OPTARG ;;
@@ -223,13 +227,13 @@ while getopts 'eSLPbrnaNs:d:w:p:x:l:H:W:' o; do
         a) artist="${OPTARG// /+}"; link=deviantart ;;
         L) pywall=true; light='-l' ;;
         P) pywall=true ;;
-        d) dir=$OPTARG;link=null;;
+        d) wallpaper_dir=$OPTARG;link=null;;
         n) link=nasa  ;;
         N) link=nasa_random ;;
         b) link=bing ;;
-        w) search="${OPTARG// /+}"; link=wallhaven;;
-        p) search="${OPTARG// /+}"; link=pixabay;;
-        x) search="${OPTARG// /+}"; link=pexels;;
+        w) link=wallhaven;;
+        p) link=pixabay;;
+        x) link=pexels;;
         *) usage ;;
     esac
 done
@@ -238,11 +242,11 @@ shift $((OPTIND - 1))
 
 case $link in
   null) select_local_random_wallpaper;;
-  reddit) reddit "$sub";;
+  reddit) reddit;;
   deviantart) deviantart "$artist";;
-  wallhaven) wallhaven "$search";;
-  pexels) pexels "$search";;
-  pixabay) pixabay "$search";;
+  wallhaven) wallhaven;;
+  pexels) pexels;;
+  pixabay) pixabay;;
   bing) bing;;
   nasa*) nasa_image;;
   link) wget -U "$useragent" -q "$search" -O "$wallpaper";;
