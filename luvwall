@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 #environment variables
 : "${LUVWALL_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/luvwall.conf}"
 [ -f "$LUVWALL_CONFIG" ] && . "$LUVWALL_CONFIG"
 
 : "${wallpaper_setter:=xwallpaper --zoom}"
-: "${wall_save_path:=${XDG_PICTURES_DIR:=$HOME/Pictures}/wallpaper${RANDOM}.jpg}"
+: "${wall_save_path:=${XDG_PICTURES_DIR:=$HOME/Pictures}/wallpaper$(date +%s).jpg}"
 : "${useragent:='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0'}"
 : "${cachedir:=/tmp/livewall}"
 
@@ -17,7 +17,7 @@ confdir=${XDG_CONFIG_HOME:-$HOME/.config}
 
 wallpaper="${cachedir}/wallpaper.jpg"
 
-: "${topics:="nature night space anime"}"
+: "${topics:='nature night space anime'}"
 
 search() {
   search=$(echo $topics | tr ' ' '\n'| shuf -n1)
@@ -40,10 +40,8 @@ save_cmd(){
 
 # reddit {{{
 reddit(){
-  sort=$2
-  top_time=$3
-  [ -z "$sort" ] && sort="hot"
-  [ -z "$top_time" ] && top_time=""
+  sort="hot"
+  top_time=""
   
   if [ -n "$search" ]; then
       sub=$search
@@ -51,22 +49,16 @@ reddit(){
       if [ ! -f "${confdir}/subreddits" ]; then
           die "Please install the subreddits file in ${confdir}"
       fi
-      readarray subreddits < "${confdir}/subreddits"
-      a=${#subreddits[@]}
-      b=$((RANDOM % a))
-      sub=${subreddits[$b]}
-      sub="$(echo -e "${sub}" | tr -d '[:space:]')"
+      sub=$(shuf -n1 < "${confdir}/subreddits")
+      sub="$(echo "${sub}" | tr -d '[:space:]')"
   fi
   
   url="https://www.reddit.com/r/$sub/$sort/.json?raw_json=1&t=$top_time"
   content=$(wget -T $timeout -U "$useragent" -q -O - $url)
-  urls=$(echo -n "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.preview.images[0].source.url')
-  arrURLS=($urls)
-  size=${#arrURLS[@]}
-  [ "$size" -eq 0 ] && die "The current subreddit is not valid."
-  idx=$((RANDOM % size))
-  target_url=${arrURLS[$idx]}
-  wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $target_url &>/dev/null
+  urls=$(printf '%s' "$content"| jq -r '.data.children[]|select(.data.post_hint|test("image")?) | .data.preview.images[0].source.url')
+  url=$(echo $urls | tr ' ' '\n'| shuf -n1)
+   [ -z "$url" ] && die "The current subreddit is not valid."
+  wget -T $timeout -U "$useragent" --no-check-certificate -q -P down -O "${wallpaper}" $url
 }
 # }}}
 unsplash() {
@@ -87,29 +79,25 @@ deviantart(){
     payload="grant_type=client_credentials&client_id=${devianart_client_id:=16531}&client_secret=${devianart_client_secret}"
     access_token=$(curl --silent -d $payload https://www.deviantart.com/oauth2/token | jq -r '.access_token')
     
-    if [ -n "$1" ]; then
-        artist=$1
-        url="https://www.deviantart.com/api/v1/oauth2/gallery/?username=${artist}&mode=popular&limit=24"
-    elif [ -n "$search" ]; then
-        url="https://www.deviantart.com/api/v1/oauth2/browse/popular?q=$search&limit=24&timerange=1month"
+    if [ -n "$search" ]; then
+        url="https://www.deviantart.com/api/v1/oauth2/browse/popular?q=$search&limit=100&timerange=alltime"
     else
-        topics=( "adoptables" "artisan-crafts" "anthro" "comics"
-          "drawings-and-paintings" "fan-art" "poetry" "stock-images" "sculpture"
-          "science-fiction" "traditional-art" "street-photography" "street-art"
-          "pixel-art" "wallpaper" "digital-art" "photo-manipulation" "science-fiction" "fractal"
-          "game-art" "fantasy" "3d" "drawings-and-paintings" "game-art" )
-        rand=$((RANDOM % ${#topics[@]}))
-        url="https://www.deviantart.com/api/v1/oauth2/browse/topic?limit=24&topic=${topics[$rand]}"
+        topics='adoptables artisan-crafts anthro comics
+        drawings-and-paintings fan-art poetry stock-images sculpture
+          science-fiction traditional-art street-photography street-art
+          pixel-art wallpaper digital-art photo-manipulation science-fiction fractal
+          game-art fantasy 3d drawings-and-paintings game-art'
+
+        rand=$(echo $topics | tr ' ' '\n'| shuf -n1)
+        url="https://www.deviantart.com/api/v1/oauth2/browse/topic?limit=24&topic=$rand"
     fi
     
     content=$(curl --silent -H "Authorization: Bearer ${access_token}" \
       -H "Accept: application/json" -H "Content-Type: application/json" "$url")
-    urls=$(echo -n $content | jq -r '.results[].content.src')
-    arrURLS=($urls)
-    size=${#arrURLS[@]}
-    idx=$((RANDOM % size))
-    target_url=${arrURLS[$idx]}
-    wget --no-check-certificate -q -P down -O ${wallpaper} "$target_url" &>/dev/null
+    urls=$(printf '%s' $content | jq -r '.results[].content.src')
+#    echo $urls | tr ' ' '\n' | wc -l
+    url=$(echo $urls | tr ' ' '\n'| shuf -n1)
+    wget --no-check-certificate -q -P down -O ${wallpaper} "$url"
 }
 # }}}
 
@@ -168,12 +156,12 @@ bing() {
 usage(){
     echo "Usage: ${0##*/}
     [-s <string>] search (default unsplash if passed alone)
-    [-H <height>]
-    [-W <width>]
+    [-H <height>] unsplash only
+    [-W <width>] unsplash only
     [-l <link>] set wallpaper from link
     [-P]  pywall
     [-L]  pywall light color scheme
-    [-a <artist>] deviantart
+    [-a <search>]  deviantart
     [-b]  bing
     [-n]  nasa image of the day
     [-N]  nasa random image
@@ -204,8 +192,8 @@ type_check() {
 # }}}
 
 select_local_random_wallpaper () {
-    wallpaper=$(find "$wallpaper_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
-      -o -iname "*.gif" \) -print | shuf -n 1)
+  wallpaper=$(find "$wallpaper_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \
+    -o -iname "*.gif" \) -print | shuf -n 1)
 }
 
 pywal_cmd() {
@@ -219,12 +207,12 @@ while getopts 'eSLPbrwpxnaNs:d:l:H:W:' o; do
     case "$o" in
         e) fijo; exit;;
         S) save_cmd; exit ;;
-        s) search="${OPTARG// /+}";;
+        s) search="$(echo $OPTARG | tr ' ' '+')";;
         H) height=$OPTARG ;;
         W) width=$OPTARG ;;
         l) link='link'; search=$OPTARG ;;
-        r) sub="${OPTARG// /+}"; link=reddit ;;
-        a) artist="${OPTARG// /+}"; link=deviantart ;;
+        r) sub="$(echo $OPTARG | tr ' ' '+')"; link=reddit ;;
+        a) link=deviantart ;;
         L) pywall=true; light='-l' ;;
         P) pywall=true ;;
         d) wallpaper_dir=$OPTARG;link=null;;
@@ -243,7 +231,7 @@ shift $((OPTIND - 1))
 case $link in
   null) select_local_random_wallpaper;;
   reddit) reddit;;
-  deviantart) deviantart "$artist";;
+  deviantart) deviantart;;
   wallhaven) wallhaven;;
   pexels) pexels;;
   pixabay) pixabay;;
