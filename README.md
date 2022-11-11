@@ -17,13 +17,13 @@ I've just modified it a little bit for my use case.
 ```
 git clone --depth=1 https://github.com/khonsaloh/luvwall
 cd luvwall
-./make install
+./make.sh install
 ```
 or just put the script in the path
 ## Uninstall
 
 ```
-./make uninstall
+./make.sh uninstall
 ```
 
 
