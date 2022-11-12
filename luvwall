@@ -18,6 +18,7 @@ confdir=${XDG_CONFIG_HOME:-$HOME/.config}
 wallpaper="${cachedir}/wallpaper.jpg"
 
 : "${topics:='nature night space anime'}"
+: "${random_source:='unsplash reddit deviantart nasa_random wallhaven pixabay pexels bing'}"
 
 search() {
   search=$(echo $topics | tr ' ' '\n'| shuf -n1)
@@ -155,6 +156,7 @@ bing() {
 # usage help {{{
 usage(){
     echo "Usage: ${0##*/}
+    [-A] random image from random source
     [-s <string>] search (default unsplash if passed alone)
     [-H <height>] unsplash only
     [-W <width>] unsplash only
@@ -203,7 +205,7 @@ pywal_cmd() {
      fi
 }
 
-while getopts 'eSLPbrwpxnaNs:d:l:H:W:' o; do
+while getopts 'AeSLPbrwpxnaNs:d:l:H:W:' o; do
     case "$o" in
         e) fijo; exit;;
         S) save_cmd; exit ;;
@@ -220,6 +222,7 @@ while getopts 'eSLPbrwpxnaNs:d:l:H:W:' o; do
         N) link=nasa_random ;;
         b) link=bing ;;
         w) link=wallhaven;;
+        A) link=$(echo $random_source| tr ' ' '\n' | tr -d "'"| shuf -n 1); echo image from $link;;
         p) link=pixabay;;
         x) link=pexels;;
         *) usage ;;
