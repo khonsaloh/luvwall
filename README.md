@@ -4,7 +4,7 @@ luvwall is a posix shell script (sort of wallpaper manager) that aims to automat
 
 # what changes does this fork make?
 
-* remove lines relative to gnome, kde, xfce native wallpaper setter utility (feh or xwallpaper are very small anyway)
+* remove lines relative to gnome, kde, xfce native wallpaper setter utility
 * added nasa image of the day, wallhaven, bing, pexels, pixabay (all these require jq)
 * (minor) the image by default is saved on the ram wich does not constant write hard drives when specially you use this utility very often. (This can be changed, of course)
 * you can customize it by editing luvwall.conf. this is shown as an example, just place it in ~/.config/
